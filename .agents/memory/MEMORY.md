@@ -1,0 +1,2 @@
+- [GlobalChat architecture](globalchat-arch.md) — key decisions: first-user→admin, uploads via base64, Clerk proxy, WS shares Express port
+- [Orval codegen quirks](orval-quirks.md) — zod output needs mode:single, no schemas option; api-zod tsconfig needs dom lib

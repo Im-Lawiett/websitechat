@@ -1,10 +1,10 @@
-# [Project name]
+# GlobalChat
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A full-featured real-time community chat platform with group channels, private DMs, Clerk authentication, and an admin dashboard.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server (port 8080)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -14,23 +14,42 @@ _Replace the heading above with the project's name, and this line with one sente
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
+- Frontend: React 19 + Vite, shadcn/ui, Tailwind CSS, Wouter, TanStack Query
+- API: Express 5 + WebSocket (ws package) at `/ws`
+- Auth: Clerk (cookie-based, proxy middleware at `/api/__clerk`)
 - DB: PostgreSQL + Drizzle ORM
 - Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- API codegen: Orval (from OpenAPI spec → `lib/api-client-react`)
+- Build: esbuild (ESM bundle)
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `lib/api-spec/openapi.yaml` — source of truth for all API contracts
+- `lib/db/src/schema/` — Drizzle ORM schema (users, groups, messages, contacts, activity)
+- `artifacts/api-server/src/routes/` — Express route handlers
+- `artifacts/api-server/src/lib/websocket.ts` — WebSocket broadcast helper
+- `artifacts/chat-app/src/` — React frontend
+- `artifacts/chat-app/src/pages/admin/dashboard.tsx` — Admin dashboard
+- `lib/api-client-react/src/generated/api.ts` — Generated hooks (do not edit)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- First registered user automatically becomes admin (only one admin role).
+- Uploads use base64 JSON (not multipart/form-data) to avoid Orval File/Blob type complications.
+- WebSocket path `/ws` is served on the same HTTP server instance as Express (shares port 8080).
+- Clerk is proxied through `/api/__clerk` so cookies work across the single Replit domain.
+- Messages table handles both group messages (groupId set) and DMs (recipientId set) in one table.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- **Landing page**: Marketing page with Sign In / Get Started
+- **Auth**: Google + email/password via Clerk
+- **Group chat**: Join public groups, send real-time messages, see member counts
+- **Direct messages**: Add contacts first, then DM them privately
+- **File sharing**: Upload images and files in messages
+- **Real-time**: WebSocket pushes new messages and ban events instantly
+- **Admin dashboard**: Stats overview, ban/unban users, create/delete groups, activity log
+- **Ban system**: Banned users see a block screen instead of the chat
 
 ## User preferences
 
@@ -38,7 +57,11 @@ _Populate as you build — explicit user instructions worth remembering across s
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Always run `pnpm --filter @workspace/db run push` after changing schema files.
+- Always run `pnpm --filter @workspace/api-spec run codegen` after changing `openapi.yaml`.
+- The `lib/api-zod/tsconfig.json` needs `"lib": ["esnext", "dom"]` to avoid File/Blob type errors.
+- The Orval zod output must use `mode: "single"` and no `schemas` option to avoid duplicate export errors.
+- Upload endpoint uses base64 JSON body — do not switch to multipart/form-data without updating types.
 
 ## Pointers
 
