@@ -1,0 +1,16 @@
+{
+  "buildCommand": "pnpm install --frozen-lockfile && pnpm --filter @workspace/chat-app run build:vercel",
+  "outputDirectory": "artifacts/chat-app/dist/public",
+  "installCommand": "pnpm install --frozen-lockfile",
+  "framework": null,
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://REPLACE_WITH_REPLIT_BACKEND_URL/api/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
